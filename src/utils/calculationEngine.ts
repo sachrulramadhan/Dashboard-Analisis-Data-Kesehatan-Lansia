@@ -1,12 +1,29 @@
 import { HealthRecord, FilterState, AggregatedMetrics, DiseaseStat, PuskesmasStat, KelurahanStat } from '../types';
 
+const PUSKESMAS_ALIASES: Record<string, string> = {
+  mabelopalu: 'Mabelopura',
+  mabelopura: 'Mabelopura',
+  mabelo: 'Mabelopura',
+  singgani: 'Singgani',
+  tawaeli: 'Tawaeli',
+  talise: 'Talise',
+};
+
 export function normalizePuskesmasName(name: string): string {
   if (!name) return 'Puskesmas Lainnya';
-  const clean = name.trim();
-  if (/^puskesmas\s+/i.test(clean)) {
-    return 'Puskesmas ' + clean.replace(/^puskesmas\s+/i, '').trim();
-  }
-  return 'Puskesmas ' + clean;
+  // Buang awalan seperti "UPTD", "PKM", "Puskesmas" dan rapikan spasi/huruf besar
+  let core = name
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^(uptd\s+)?(puskesmas|pkm|pusk\.?)\s+/i, '')
+    .trim();
+  if (!core) return 'Puskesmas Lainnya';
+  const alias = PUSKESMAS_ALIASES[core.toLowerCase().replace(/[^a-z]/g, '')];
+  if (alias) return 'Puskesmas ' + alias;
+  core = core
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return 'Puskesmas ' + core;
 }
 
 export function filterRecords(records: HealthRecord[], filters: FilterState): HealthRecord[] {

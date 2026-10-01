@@ -157,7 +157,7 @@ export const KemandirianView: React.FC = () => {
       {/* Stacked Bar by Puskesmas (Section 11 requirement) */}
       <StackedBarChart
         title="Distribusi Tingkat Kemandirian per Puskesmas"
-        subtitle="Proporsi kategori A, B, dan C di 12 Puskesmas Kota Palu"
+        subtitle="Proporsi kategori A, B, dan C di 14 Puskesmas Kota Palu"
         rows={stackedRows}
         periodLabel={periodLabel}
       />

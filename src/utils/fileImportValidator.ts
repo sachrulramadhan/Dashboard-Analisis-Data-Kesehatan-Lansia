@@ -78,22 +78,50 @@ export function extractYearFromString(text: string): number | null {
 /**
  * Menemukan Puskesmas induk dari nama kelurahan di Kota Palu
  */
+const normKel = (x: string) =>
+  x
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+// Ejaan lain yang sering muncul di file laporan
+const KELURAHAN_ALIASES: Record<string, string> = {
+  'bss barat': 'BSS Barat',
+  'besusu barat': 'BSS Barat',
+  'bss tengah': 'BSS Tengah',
+  'besusu tengah': 'BSS Tengah',
+  'bss timur': 'BSS Timur',
+  'besusu timur': 'BSS Timur',
+  'talise valangguni': 'T. Valangguni',
+  't valangguni': 'T. Valangguni',
+  'kayumalue ngapa': 'Kayu Malue Ngapa',
+  'kayumalue pajeko': 'Kayu Malue Pajeko',
+  'tavanjuka': 'Tawanjuka',
+  'layana indah': 'Layana Indah',
+};
+
+/**
+ * Menemukan Puskesmas induk dari nama kelurahan di Kota Palu.
+ * Pencocokan persis (tanpa memedulikan huruf besar/kecil dan tanda baca) lebih dulu,
+ * agar kelurahan tidak salah masuk ke puskesmas lain.
+ */
 export function findPuskesmasByKelurahan(kelurahanName: string): string | null {
   if (!kelurahanName) return null;
-  const cleanKel = kelurahanName.trim().toLowerCase();
+  let key = normKel(kelurahanName);
+  if (KELURAHAN_ALIASES[key]) key = normKel(KELURAHAN_ALIASES[key]);
 
   for (const [pkm, kels] of Object.entries(PUSKESMAS_KELURAHAN_MAP)) {
-    if (kels.some(k => k.toLowerCase() === cleanKel || cleanKel.includes(k.toLowerCase()) || k.toLowerCase().includes(cleanKel))) {
-      return pkm;
-    }
+    if (kels.some((k) => normKel(k) === key)) return pkm;
   }
 
-  // Khusus singkatan BSS (Besusu)
-  if (cleanKel.includes('bss barat') || cleanKel.includes('besusu barat')) return 'Puskesmas Talise';
-  if (cleanKel.includes('bss tengah') || cleanKel.includes('besusu tengah')) return 'Puskesmas Talise';
-  if (cleanKel.includes('bss timur') || cleanKel.includes('besusu timur')) return 'Puskesmas Talise';
-
-  return null;
+  // Cadangan: cocok sebagian hanya bila hasilnya satu puskesmas saja (tidak ambigu)
+  const hits = new Set<string>();
+  for (const [pkm, kels] of Object.entries(PUSKESMAS_KELURAHAN_MAP)) {
+    if (kels.some((k) => key.length >= 4 && (normKel(k).startsWith(key) || key.startsWith(normKel(k))))) {
+      hits.add(pkm);
+    }
+  }
+  return hits.size === 1 ? Array.from(hits)[0] : null;
 }
 
 /**

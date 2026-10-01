@@ -221,6 +221,7 @@ function parseDinkesMatrix(
   const errors: string[] = [];
   const warnings: string[] = [];
   let currentPuskesmas = 'Puskesmas Singgani';
+  let sawPuskesmasHeader = false;
 
   for (let i = startRow; i < data2D.length; i++) {
     const row = data2D[i] || [];
@@ -243,6 +244,7 @@ function parseDinkesMatrix(
       // Kasus normal: col1 adalah Puskesmas atau kosong, col2 adalah Kelurahan
       if (col1.toLowerCase().includes('puskesmas') || PUSKESMAS_LIST.some(p => col1.toLowerCase().includes(p.toLowerCase().replace('puskesmas ', '')))) {
         currentPuskesmas = col1;
+        sawPuskesmasHeader = true;
       }
       kelurahanName = col2;
       posbinduValue = cleanNumber(row[3]);
@@ -265,6 +267,12 @@ function parseDinkesMatrix(
 
     if (!kelurahanName || kelurahanName.toLowerCase() === 'total' || kelurahanName.toLowerCase() === 'jumlah') {
       continue;
+    }
+
+    // Belum ada judul puskesmas di file ini -> cocokkan dari nama kelurahan
+    if (!sawPuskesmasHeader) {
+      const guessed = findPuskesmasByKelurahan(kelurahanName);
+      if (guessed) currentPuskesmas = guessed;
     }
 
     puskesmasName = normalizePuskesmasName(currentPuskesmas);
@@ -522,7 +530,7 @@ function parseFlatTable(
       lastKnownPkm = pkmVal;
     }
 
-    const puskesmas = normalizePuskesmasName(pkmVal || lastKnownPkm);
+    const puskesmas = normalizePuskesmasName(pkmVal || findPuskesmasByKelurahan(kelVal) || lastKnownPkm);
     const kelurahan = kelVal || `Kelurahan ${i}`;
     const tahun = colTahun >= 0 ? cleanNumber(row[colTahun]) || defaultYear : defaultYear;
     

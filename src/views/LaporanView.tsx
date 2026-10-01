@@ -446,7 +446,7 @@ export const LaporanView: React.FC = () => {
             <ol className="list-decimal pl-5 text-xs text-slate-700 space-y-1 text-justify">
               <li>Puskesmas dengan capaian skrining di bawah 50% wajib menjadwalkan Posyandu Lansia terintegrasi bersama kader kelurahan.</li>
               <li>Tingkat kepatuhan minum obat antihipertensi dan antidiabetes harus dipantau melalui program Home Care nakes.</li>
-              <li>Penyediaan logistik strip pemeriksaan gula darah dan kolesterol harus dialokasikan merata di 12 Puskesmas se-Kota Palu.</li>
+              <li>Penyediaan logistik strip pemeriksaan gula darah dan kolesterol harus dialokasikan merata di 14 Puskesmas se-Kota Palu.</li>
             </ol>
           </div>
 

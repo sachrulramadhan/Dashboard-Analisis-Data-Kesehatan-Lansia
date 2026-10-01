@@ -531,7 +531,7 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) =
                   onChange={(e) => updateFilter('puskesmas', e.target.value)}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-semibold text-slate-800"
                 >
-                  <option value="ALL">Semua Puskesmas (12 Puskesmas Kota Palu)</option>
+                  <option value="ALL">Semua Puskesmas (14 Puskesmas Kota Palu)</option>
                   {allPuskesmasList.map((p) => (
                     <option key={p} value={p}>
                       {p}

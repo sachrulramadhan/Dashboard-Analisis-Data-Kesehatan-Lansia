@@ -28,7 +28,7 @@ export const PeriodBanner: React.FC = () => {
             {dataSourceType === 'demo' && (
               <span 
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200"
-                title="Data simulasi 12 Puskesmas Kota Palu"
+                title="Data simulasi 14 Puskesmas Kota Palu"
               >
                 <Sparkles className="w-3 h-3 text-amber-600" />
                 Simulasi ({dataset.length} baris)

@@ -24,7 +24,7 @@ type MapIndicator =
   | 'dirujuk'
   | 'kunjunganRumah';
 
-// SVG map representation of Kota Palu's 12 Puskesmas regions
+// SVG map representation of Kota Palu's 14 Puskesmas regions
 interface RegionShape {
   id: string;
   name: string;
@@ -278,7 +278,7 @@ export const PaluGisMap: React.FC<PaluGisMapProps> = ({
               Peta GIS Interaktif Kota Palu
             </h3>
             <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-              12 Puskesmas
+              14 Puskesmas
             </span>
           </div>
           <p className="text-xs text-slate-500">

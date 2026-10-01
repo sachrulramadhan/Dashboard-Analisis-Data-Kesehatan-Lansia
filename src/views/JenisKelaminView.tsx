@@ -139,7 +139,7 @@ export const JenisKelaminView: React.FC = () => {
         <div className="lg:col-span-7">
           <StackedBarChart
             title="Komparasi Kunjungan Gender per Puskesmas"
-            subtitle="Sebaran laki-laki dan perempuan di 12 Puskesmas Kota Palu"
+            subtitle="Sebaran laki-laki dan perempuan di 14 Puskesmas Kota Palu"
             rows={stackedRows}
             periodLabel={periodLabel}
           />

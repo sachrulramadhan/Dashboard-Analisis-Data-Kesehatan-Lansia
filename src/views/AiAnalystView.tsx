@@ -92,7 +92,7 @@ Pada ${periodLabel}, tercatat total sasaran lansia sebanyak ${metrics.totalSasar
 
 ### 5. Rekomendasi Tindak Lanjut Program
 1. **Intensifikasi Posyandu Lansia & Posbindu**: Tingkatkan frekuensi pembinaan kader dan pemeriksaan berkala di wilayah dengan cakupan skrining di bawah 50%.
-2. **Ketersediaan Logistik Skrining**: Pastikan strip tes gula darah, kolesterol, dan asam urat mencukupi di seluruh 12 Puskesmas binaan.
+2. **Ketersediaan Logistik Skrining**: Pastikan strip tes gula darah, kolesterol, dan asam urat mencukupi di seluruh 14 Puskesmas binaan.
 3. **Program Home Care Terjadwal**: Prioritaskan kunjungan rumah nakes bagi lansia dengan tingkat kemandirian Kategori C (Ketergantungan Total/Berat).
 4. **Monitoring Berkala Antar Periode**: Lakukan evaluasi triwulanan atas tren drop-out pengobatan hipertensi dan diabetes melitus.`;
   };

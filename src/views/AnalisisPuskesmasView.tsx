@@ -89,7 +89,7 @@ export const AnalisisPuskesmasView: React.FC = () => {
           <div>
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <Building className="w-5 h-5 text-blue-600" />
-              Tabel Komparasi & Kinerja 12 Puskesmas Kota Palu
+              Tabel Komparasi & Kinerja 14 Puskesmas Kota Palu
             </h2>
             <p className="text-xs text-slate-500">
               Evaluasi kinerja program lansia (Fokus Utama: Lansia Usia ≥60 Tahun Standar SPM) • {periodLabel}

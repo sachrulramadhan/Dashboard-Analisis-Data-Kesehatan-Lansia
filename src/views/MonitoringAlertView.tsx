@@ -341,7 +341,7 @@ export const MonitoringAlertView: React.FC = () => {
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
             <ComparisonBarChart
               title="Perbandingan Cakupan Skrining Lansia (60+) Antar-Puskesmas"
-              subtitle={`Peringkat capaian seluruh 12 Puskesmas pada ${periodLabel}`}
+              subtitle={`Peringkat capaian seluruh 14 Puskesmas pada ${periodLabel}`}
               items={puskesmasStats.map((p) => ({
                 label: p.puskesmas.replace('Puskesmas ', ''),
                 sublabel: `${p.skrining.toLocaleString('id-ID')} dari ${p.sasaran.toLocaleString('id-ID')} lansia (60+)`,

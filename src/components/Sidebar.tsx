@@ -89,7 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen })
     {
       title: 'WILAYAH',
       items: [
-        { id: 'analisis-puskesmas', label: 'Kinerja 12 Puskesmas', icon: <Building className="w-4 h-4" /> },
+        { id: 'analisis-puskesmas', label: 'Kinerja 14 Puskesmas', icon: <Building className="w-4 h-4" /> },
         { id: 'analisis-kelurahan', label: 'Sebaran 46 Kelurahan', icon: <MapPin className="w-4 h-4" /> },
         { id: 'peta-gis', label: 'Peta Spasial GIS', icon: <Map className="w-4 h-4" /> },
       ],

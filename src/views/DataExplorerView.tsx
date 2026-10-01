@@ -595,7 +595,7 @@ export const DataExplorerView: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm font-bold text-slate-900">
-                  {dataSourceType === 'demo' && 'Status Data: Data Simulasi / Contoh Bawaan (12 Puskesmas Kota Palu)'}
+                  {dataSourceType === 'demo' && 'Status Data: Data Simulasi / Contoh Bawaan (14 Puskesmas Kota Palu)'}
                   {dataSourceType === 'user' && 'Status Data: Data Riil Hasil Import Pengguna'}
                   {dataSourceType === 'empty' && 'Status Data: Data Masih Kosong (0 Baris)'}
                 </h3>
@@ -658,7 +658,7 @@ export const DataExplorerView: React.FC = () => {
                 type="button"
                 onClick={() => setRestoreModalOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-amber-300 text-amber-800 hover:bg-amber-50 rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-                title="Kembalikan data ke contoh simulasi 12 Puskesmas Kota Palu"
+                title="Kembalikan data ke contoh simulasi 14 Puskesmas Kota Palu"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-amber-600" />
                 <span>Muat Data Contoh (Demo)</span>
@@ -1311,7 +1311,7 @@ export const DataExplorerView: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-base font-bold text-slate-900">Muat Kembali Data Contoh?</h3>
-                <p className="text-xs text-slate-500">Simulasi 12 Puskesmas & 46 Kelurahan Kota Palu</p>
+                <p className="text-xs text-slate-500">Simulasi 14 Puskesmas & 46 Kelurahan Kota Palu</p>
               </div>
             </div>
 
