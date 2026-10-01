@@ -48,11 +48,12 @@ export function exportRecordsToExcel(records: HealthRecord[], filenamePrefix: st
 export function exportSummaryToExcel(
   metrics: AggregatedMetrics, 
   puskesmasStats: PuskesmasStat[], 
-  filters: FilterState
+  filters: FilterState,
+  periodLabelOverride?: string
 ) {
-  const periodLabel = filters.mode === 'monthly' 
+  const periodLabel = periodLabelOverride ?? (filters.mode === 'monthly' 
     ? `Bulan ${filters.month} Tahun ${filters.year}` 
-    : `Akumulasi Jan-Desember ${filters.year}`;
+    : `Akumulasi Jan-Desember ${filters.year}`);
 
   const summarySheetData = [
     ['DASHBOARD ANALISIS DATA KESEHATAN LANSIA'],
@@ -106,7 +107,7 @@ export function exportSummaryToExcel(
   XLSX.utils.book_append_sheet(wb, ws2, 'Capaian Puskesmas');
 
   const dateStr = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `Laporan_Eksekutif_Lansia_${filters.year}_${filters.mode}_${dateStr}.xlsx`);
+  XLSX.writeFile(wb, `Laporan_Eksekutif_Lansia_${(periodLabelOverride ?? `${filters.year}_${filters.mode}`).replace(/[^A-Za-z0-9]+/g, '_')}_${dateStr}.xlsx`);
 }
 
 export function exportRecordsToCSV(records: HealthRecord[], filenamePrefix: string = 'Data_Kesehatan_Lansia') {
