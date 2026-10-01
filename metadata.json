@@ -1,0 +1,6 @@
+{
+  "name": "Dashboard Analisis Data Kesehatan Lansia",
+  "description": "Sistem monitoring, evaluasi, dan analisis data kesehatan lansia tingkat Dinas Kesehatan dan Puskesmas dengan mode analisis bulanan & akumulasi 1 tahun, GIS Kota Palu, dan AI Analyst.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
