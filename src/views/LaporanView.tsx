@@ -12,40 +12,145 @@ import {
 import { useDashboard } from '../context/DashboardContext';
 import { exportSummaryToExcel, triggerPrint } from '../utils/exportUtils';
 import { MONTH_NAMES } from '../data/mockHealthData';
+import { filterRecords, aggregateMetrics, getDiseaseRanking, getPuskesmasStats } from '../utils/calculationEngine';
+import { FilterState } from '../types';
 
 type ReportType = 'bulanan' | 'triwulan' | 'semester' | 'tahunan';
 
+const MENU_BY_TYPE: Record<ReportType, string> = {
+  bulanan: 'laporan-bulanan',
+  triwulan: 'laporan-triwulan',
+  semester: 'laporan-semester',
+  tahunan: 'laporan-tahunan',
+};
+
+const ROMAN = ['I', 'II', 'III', 'IV'];
+
 export const LaporanView: React.FC = () => {
-  const { metrics, periodLabel, filters, puskesmasStats, diseaseRanking, activeMenu, setActiveMenu } = useDashboard();
-  
-  const initialType: ReportType = useMemo(() => {
-    if (activeMenu === 'laporan-triwulan') return 'triwulan';
-    if (activeMenu === 'laporan-semester') return 'semester';
-    if (activeMenu === 'laporan-tahunan') return 'tahunan';
+  const { dataset, filters, activeMenu, setActiveMenu } = useDashboard();
+
+  const typeFromMenu = (menu: string): ReportType => {
+    if (menu === 'laporan-triwulan') return 'triwulan';
+    if (menu === 'laporan-semester') return 'semester';
+    if (menu === 'laporan-tahunan') return 'tahunan';
     return 'bulanan';
-  }, [activeMenu]);
+  };
 
-  const [reportType, setReportType] = useState<ReportType>(initialType);
-  const [selectedQuarter, setSelectedQuarter] = useState<number>(1);
-  const [selectedSemester, setSelectedSemester] = useState<number>(1);
-  const [reportGenerated, setReportGenerated] = useState(true);
+  const [reportType, setReportType] = useState<ReportType>(() => typeFromMenu(activeMenu));
+  // Pilihan periode milik halaman laporan sendiri (tidak membaca bulan di filter utama)
+  const [selectedMonth, setSelectedMonth] = useState<number>(filters.month);
+  const [selectedQuarter, setSelectedQuarter] = useState<number>(Math.ceil(filters.month / 3));
+  const [selectedSemester, setSelectedSemester] = useState<number>(Math.ceil(filters.month / 6));
+  const [selectedYear, setSelectedYear] = useState<number>(filters.year);
+  const [reportGenerated, setReportGenerated] = useState(false);
 
-  // Sync with activeMenu
+  // Pindah menu laporan -> ganti jenis laporan dan minta pengguna menekan GENERATE REPORT
   useEffect(() => {
-    if (activeMenu === 'laporan-triwulan') {
-      setReportType('triwulan');
-      setReportGenerated(true);
-    } else if (activeMenu === 'laporan-semester') {
-      setReportType('semester');
-      setReportGenerated(true);
-    } else if (activeMenu === 'laporan-tahunan') {
-      setReportType('tahunan');
-      setReportGenerated(true);
-    } else if (activeMenu === 'laporan-bulanan') {
-      setReportType('bulanan');
-      setReportGenerated(true);
-    }
+    setReportType(typeFromMenu(activeMenu));
+    setReportGenerated(false);
   }, [activeMenu]);
+
+  const availableYears = useMemo(() => {
+    const set = new Set<number>(dataset.map((r) => r.tahun));
+    set.add(selectedYear);
+    return Array.from(set).sort((a, b) => b - a);
+  }, [dataset, selectedYear]);
+
+  // Bulan-bulan yang tercakup oleh jenis laporan yang dipilih
+  const periodMonths = useMemo(() => {
+    switch (reportType) {
+      case 'bulanan':
+        return [selectedMonth];
+      case 'triwulan':
+        return [1, 2, 3].map((i) => (selectedQuarter - 1) * 3 + i);
+      case 'semester':
+        return [1, 2, 3, 4, 5, 6].map((i) => (selectedSemester - 1) * 6 + i);
+      case 'tahunan':
+        return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    }
+  }, [reportType, selectedMonth, selectedQuarter, selectedSemester]);
+
+  const periodLabel = useMemo(() => {
+    const first = MONTH_NAMES[periodMonths[0] - 1];
+    const last = MONTH_NAMES[periodMonths[periodMonths.length - 1] - 1];
+    switch (reportType) {
+      case 'bulanan':
+        return `${first} ${selectedYear}`;
+      case 'triwulan':
+        return `Triwulan ${ROMAN[selectedQuarter - 1]} (${first} – ${last}) ${selectedYear}`;
+      case 'semester':
+        return `Semester ${ROMAN[selectedSemester - 1]} (${first} – ${last}) ${selectedYear}`;
+      case 'tahunan':
+        return `Tahun ${selectedYear} (${first} – ${last})`;
+    }
+  }, [reportType, periodMonths, selectedQuarter, selectedSemester, selectedYear]);
+
+  // Filter laporan: periode dari menu laporan, wilayah/jenis kelamin/umur tetap mengikuti filter utama
+  const reportFilters: FilterState = useMemo(
+    () => ({
+      ...filters,
+      year: selectedYear,
+      month: periodMonths[periodMonths.length - 1],
+      mode: reportType === 'bulanan' ? 'monthly' : 'cumulative',
+    }),
+    [filters, selectedYear, periodMonths, reportType]
+  );
+
+  const currentRecords = useMemo(
+    () =>
+      filterRecords(dataset, { ...reportFilters, mode: 'cumulative' }).filter((r) =>
+        periodMonths.includes(r.bulan)
+      ),
+    [dataset, reportFilters, periodMonths]
+  );
+
+  // Pembanding: bulan yang sama pada tahun sebelumnya
+  const previousRecords = useMemo(
+    () =>
+      filterRecords(dataset, { ...reportFilters, year: selectedYear - 1, mode: 'cumulative' }).filter((r) =>
+        periodMonths.includes(r.bulan)
+      ),
+    [dataset, reportFilters, selectedYear, periodMonths]
+  );
+
+  const metrics = useMemo(
+    () => aggregateMetrics(currentRecords, previousRecords, reportFilters),
+    [currentRecords, previousRecords, reportFilters]
+  );
+  const puskesmasStats = useMemo(
+    () => getPuskesmasStats(currentRecords, reportFilters),
+    [currentRecords, reportFilters]
+  );
+  const diseaseRanking = useMemo(
+    () => getDiseaseRanking(currentRecords, previousRecords),
+    [currentRecords, previousRecords]
+  );
+
+  const monthsWithData = useMemo(
+    () => Array.from(new Set(currentRecords.map((r) => r.bulan))).sort((a, b) => a - b),
+    [currentRecords]
+  );
+  const hasData = currentRecords.length > 0;
+  const isPartial = hasData && monthsWithData.length < periodMonths.length;
+
+  const wilayahLabel =
+    reportFilters.kelurahan !== 'ALL'
+      ? `Kelurahan ${reportFilters.kelurahan}`
+      : reportFilters.puskesmas !== 'ALL'
+      ? reportFilters.puskesmas
+      : 'Seluruh Puskesmas Kota Palu';
+
+  const extraFilterLabel = [
+    reportFilters.gender !== 'ALL' ? `Jenis kelamin: ${reportFilters.gender}` : '',
+    reportFilters.ageGroup !== 'ALL' ? `Kelompok umur: ${reportFilters.ageGroup}` : '',
+  ]
+    .filter(Boolean)
+    .join(' • ');
+
+  const changeSelection = (apply: () => void) => {
+    apply();
+    setReportGenerated(false); // pilihan berubah -> laporan perlu di-generate ulang
+  };
 
   const handleGenerateReport = () => {
     setReportGenerated(true);
@@ -54,13 +159,13 @@ export const LaporanView: React.FC = () => {
   const getReportTitle = () => {
     switch (reportType) {
       case 'bulanan':
-        return `Laporan Bulanan Program Kesehatan Lansia - ${MONTH_NAMES[filters.month - 1]} ${filters.year}`;
+        return `Laporan Bulanan Program Kesehatan Lansia - ${MONTH_NAMES[selectedMonth - 1]} ${selectedYear}`;
       case 'triwulan':
-        return `Laporan Triwulan ${selectedQuarter} (TW ${selectedQuarter}) Program Lansia - Tahun ${filters.year}`;
+        return `Laporan Triwulan ${ROMAN[selectedQuarter - 1]} (TW ${selectedQuarter}) Program Lansia - Tahun ${selectedYear}`;
       case 'semester':
-        return `Laporan Semester ${selectedSemester} Program Lansia - Tahun ${filters.year}`;
+        return `Laporan Semester ${ROMAN[selectedSemester - 1]} Program Lansia - Tahun ${selectedYear}`;
       case 'tahunan':
-        return `Laporan Tahunan Evaluasi Program Kesehatan Lansia - Tahun ${filters.year}`;
+        return `Laporan Tahunan Evaluasi Program Kesehatan Lansia - Tahun ${selectedYear}`;
     }
   };
 
@@ -89,11 +194,11 @@ export const LaporanView: React.FC = () => {
               <span>GENERATE REPORT</span>
             </button>
 
-            {reportGenerated && (
+            {reportGenerated && hasData && (
               <>
                 <button
                   type="button"
-                  onClick={() => exportSummaryToExcel(metrics, puskesmasStats, filters)}
+                  onClick={() => exportSummaryToExcel(metrics, puskesmasStats, reportFilters, periodLabel)}
                   className="px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
@@ -120,8 +225,10 @@ export const LaporanView: React.FC = () => {
             <select
               value={reportType}
               onChange={(e) => {
-                setReportType(e.target.value as ReportType);
+                const next = e.target.value as ReportType;
+                setReportType(next);
                 setReportGenerated(false);
+                setActiveMenu(MENU_BY_TYPE[next]);
               }}
               className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-semibold"
             >
@@ -132,12 +239,27 @@ export const LaporanView: React.FC = () => {
             </select>
           </div>
 
+          {reportType === 'bulanan' && (
+            <div>
+              <label className="font-semibold text-slate-700 block mb-1">Pilih Bulan:</label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => changeSelection(() => setSelectedMonth(Number(e.target.value)))}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-semibold"
+              >
+                {MONTH_NAMES.map((name, i) => (
+                  <option key={name} value={i + 1}>{name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {reportType === 'triwulan' && (
             <div>
               <label className="font-semibold text-slate-700 block mb-1">Pilih Triwulan:</label>
               <select
                 value={selectedQuarter}
-                onChange={(e) => setSelectedQuarter(Number(e.target.value))}
+                onChange={(e) => changeSelection(() => setSelectedQuarter(Number(e.target.value)))}
                 className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-semibold"
               >
                 <option value={1}>Triwulan I (Januari – Maret)</option>
@@ -153,7 +275,7 @@ export const LaporanView: React.FC = () => {
               <label className="font-semibold text-slate-700 block mb-1">Pilih Semester:</label>
               <select
                 value={selectedSemester}
-                onChange={(e) => setSelectedSemester(Number(e.target.value))}
+                onChange={(e) => changeSelection(() => setSelectedSemester(Number(e.target.value)))}
                 className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-semibold"
               >
                 <option value={1}>Semester I (Januari – Juni)</option>
@@ -164,15 +286,29 @@ export const LaporanView: React.FC = () => {
 
           <div>
             <label className="font-semibold text-slate-700 block mb-1">Tahun Evaluasi:</label>
-            <div className="p-2 bg-slate-100 rounded-lg font-bold text-slate-800 border border-slate-200">
-              {filters.year}
-            </div>
+            <select
+              value={selectedYear}
+              onChange={(e) => changeSelection(() => setSelectedYear(Number(e.target.value)))}
+              className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs font-semibold"
+            >
+              {availableYears.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
 
       {/* Generated Report Document Paper (Section 30 requirement) */}
-      {reportGenerated ? (
+      {reportGenerated && !hasData ? (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center shadow-xs no-print">
+          <FileText className="w-10 h-10 text-amber-600 mx-auto mb-2" />
+          <h3 className="text-base font-bold text-amber-900 mb-1">Belum ada data untuk periode ini</h3>
+          <p className="text-xs text-amber-800 max-w-md mx-auto">
+            Tidak ditemukan data laporan untuk <strong>{periodLabel}</strong>. Pilih periode lain, atau minta admin mengimpor data periode tersebut di menu Import Data.
+          </p>
+        </div>
+      ) : reportGenerated ? (
         <div className="bg-white border border-slate-300 rounded-2xl p-8 sm:p-12 shadow-sm max-w-4xl mx-auto space-y-6 text-slate-800 print:shadow-none print:border-none print:p-0">
           {/* Header Kop Surat */}
           <div className="text-center pb-6 border-b-2 border-slate-800">
@@ -193,8 +329,14 @@ export const LaporanView: React.FC = () => {
               {getReportTitle()}
             </h3>
             <p className="text-xs text-slate-600 mt-1">
-              Periode Evaluasi: {periodLabel} • Wilayah Kerja: Seluruh Puskesmas Kota Palu
+              Periode Evaluasi: {periodLabel} • Wilayah Kerja: {wilayahLabel}
+              {extraFilterLabel ? ` • ${extraFilterLabel}` : ''}
             </p>
+            {isPartial && (
+              <p className="text-[11px] text-amber-700 mt-1 italic">
+                Catatan: data tersedia untuk {monthsWithData.length} dari {periodMonths.length} bulan pada periode ini ({monthsWithData.map((m) => MONTH_NAMES[m - 1]).join(', ')}).
+              </p>
+            )}
           </div>
 
           {/* Bab 1: Ringkasan Eksekutif */}
@@ -318,7 +460,7 @@ export const LaporanView: React.FC = () => {
               <p className="text-slate-500">NIP. 19740512 200212 2 003</p>
             </div>
             <div>
-              <p>Palu, 28 September {filters.year}</p>
+              <p>Palu, 28 September {selectedYear}</p>
               <p className="font-bold">Pengelola Program Kesehatan Lansia</p>
               <div className="h-16" />
               <p className="font-bold underline">Hj. Siti Nurbaya, S.Kep, Ners</p>
